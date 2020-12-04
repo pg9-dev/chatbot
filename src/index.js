@@ -29,8 +29,18 @@ const styles = {
     display: 'column',
   }, 
   form: {
-    height: '100px',
-    width: '100%'
+    height: '30px',
+    width: '100%',
+    left: 0, 
+    bottom: 0, 
+    position: "fixed",
+    padding: '10px 10px',
+    borderTop: '1px solid grey'
+  },
+  input: { 
+    width: '100%',
+    height: '100%',
+    border: 'none'
   }
 };
 
@@ -87,11 +97,11 @@ class Chat extends React.Component {
         />
         <form style={styles.form} onSubmit={(e) => this.onMessageSubmit(e)}>
           <input
+          style={styles.input}
             ref={(m) => {
               this.message = m;
             }}
             placeholder="Type a message..."
-            className="message-input"
           />
         </form>
       </div>
