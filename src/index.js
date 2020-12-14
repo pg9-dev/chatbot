@@ -4,6 +4,25 @@ import {
   ChatFeed,
   Message,
 } from "react-chat-ui";
+import AWS from 'aws-sdk';
+
+
+// Initialize the Amazon Cognito credentials provider
+AWS.config.region = "us-west-2"; // Region
+AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+  IdentityPoolId: "us-west-2:83ff2f15-0f48-4309-af55-6e2b8563a8f1"
+});
+
+// CREATE THE LEX RUNTIME
+let lexRunTime = new AWS.LexRuntime();
+let lexUserId = "LumiSightBot" + Date.now();
+
+// @todo: dev only
+AWS.config.credentials.get(function(err) {
+  if (err) console.log(err);
+  else console.log(AWS.config.credentials);
+});
+
 
 const styles = {
   button: {
@@ -50,7 +69,7 @@ class Chat extends React.Component {
     this.state = {
       isTyping: false, 
       messages: [
-        new Message({ id: 1, message: "Hi there! How can I help you?", senderName: "Becky" }),
+        new Message({ id: 1, message: "Hi there! How can I help you?", senderName: "LumiSight" }),
       ],
     };
   }
