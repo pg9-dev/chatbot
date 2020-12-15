@@ -1,3 +1,5 @@
+import { Button, Container, Box, TextField } from "@material-ui/core";
+import { withStyles } from "@material-ui/core/styles";
 import React from "react";
 import { render } from "react-dom";
 import {
@@ -18,59 +20,67 @@ let lexRunTime = new AWS.LexRuntime();
 let lexUserId = "LumiSightBot" + Date.now();
 
 // @todo: dev only
-AWS.config.credentials.get(function(err) {
+AWS.config.credentials.get(function (err) {
   if (err) console.log(err);
   else console.log(AWS.config.credentials);
 });
 
+const ERR_MSG = "Trouble connecting to the server."; 
 
-const styles = {
-  button: {
+const buildLexParams = (message) => ({
+  botAlias: "$LATEST",
+  botName: "LumiBot",
+  inputText: message,
+  userId: lexUserId,
+});
+
+const muiStyles = {
+  form: {
+    borderTop: '1px solid black',
+    height: '100%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '10px',
+  },
+  container: {
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '10px'
+  },
+  chat: {
+    height: "95%",
+  },
+  text: {
+    width: "80%",
+    height: "100%",
+    border: 'none',
+    fontFamily: 'Roboto',
+    fontSize: '15px'
+  },
+  sendButton: {
+    width: "10%",
+    height: "100%",
     backgroundColor: "#fff",
     borderColor: "#1D2129",
     borderStyle: "solid",
-    borderRadius: 20,
+    borderRadius: 30,
     borderWidth: 2,
     color: "#1D2129",
-    fontSize: 18,
     fontWeight: "300",
-    paddingTop: 8,
-    paddingBottom: 8,
-    paddingLeft: 16,
-    paddingRight: 16,
-  },
-  selected: {
-    color: "#fff",
-    backgroundColor: "#0084FF",
-    borderColor: "#0084FF",
-  },
-  containerStyle: {
-    display: 'column',
-  }, 
-  form: {
-    height: '30px',
-    width: '100%',
-    left: 0, 
-    bottom: 0, 
-    position: "fixed",
-    padding: '10px 10px',
-    borderTop: '1px solid grey'
-  },
-  input: { 
-    width: '100%',
-    height: '100%',
-    border: 'none'
   }
 };
 
 class Chat extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
+    this.classes = this.props.classes;
     this.state = {
-      isTyping: false, 
+      isTyping: false,
       messages: [
-        new Message({ id: 1, message: "Hi there! How can I help you?", senderName: "LumiSight" }),
+        new Message({ id: 1, message: "Hi there! How can I help you?", senderName: "LumiBot" }),
       ],
+      currentUser: "You"
     };
   }
 
@@ -80,17 +90,24 @@ class Chat extends React.Component {
     if (!input.value) {
       return false;
     }
-    this.pushMessage(this.state.curr_user, input.value);
-    input.value = "";
-    return true;
+    this.pushMessage(0, input.value);
+    lexRunTime.postText(buildLexParams(input.value), (err, data) => {
+      if (err) {
+        this.pushMessage(1, ERR_MSG);
+        return false; 
+      }
+      this.pushMessage(1, data.message);
+      input.value = '';
+      return true;
+    });
   }
 
-  pushMessage(recipient=0, message) {
+  pushMessage(recipient = 0, message) {
     const prevState = this.state;
     const newMessage = new Message({
       id: recipient,
       message,
-      senderName: "You",
+      senderName: "LumiBot",
     });
     prevState.messages.push(newMessage);
     this.setState(this.state);
@@ -98,34 +115,39 @@ class Chat extends React.Component {
 
   render() {
     return (
-      <div style={styles.containerStyle}>
-        <ChatFeed
-          messages={this.state.messages} 
-          isTyping={this.state.isTyping} 
-          showSenderName 
-          bubblesCentered={true} 
-          bubbleStyles={{
-            text: {
-              fontSize: 13,
-            },
-            chatbubble: {
-              borderRadius: 20,
-              padding: 10,
-            },
-          }}
-        />
-        <form style={styles.form} onSubmit={(e) => this.onMessageSubmit(e)}>
-          <input
-          style={styles.input}
-            ref={(m) => {
-              this.message = m;
+      <div className={this.classes.container}>
+        <div className={this.classes.chat}>
+          <ChatFeed
+            messages={this.state.messages}
+            isTyping={this.state.isTyping}
+            showSenderName
+            bubbleStyles={{
+              text: {
+                fontSize: 15,
+              },
+              chatbubble: {
+                borderRadius: 35,
+                padding: 15,
+              },
             }}
-            placeholder="Type a message..."
           />
-        </form>
+        </div>
+        <div style={{ height: '5%', marginBottom: '30px' }}>
+          <form onSubmit={(e) => this.onMessageSubmit(e)} className={this.classes.form}>
+            <input
+              className={this.classes.text}
+              ref={(m) => {
+                this.message = m;
+              }}
+              placeholder="Type a message here..."
+            />
+            <input className={this.classes.sendButton} type="submit" value="Send"></input>
+          </form>
+        </div>
       </div>
     );
   }
 }
 
-render(<Chat />, document.getElementById("root"));
+const StyleChat = withStyles(muiStyles)(Chat);
+render(<StyleChat />, document.getElementById("root"));
